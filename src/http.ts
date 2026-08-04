@@ -30,15 +30,17 @@ export interface RetryDeps {
 
 const DEFAULT_BASE_DELAY_MS = 200;
 const DEFAULT_TIMEOUT_MS = 60_000;
+const MAX_RETRY_AFTER_MS = 60_000;
+const originalFetch: typeof fetch = globalThis.fetch;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const parseRetryAfter = (value: string | null): number | null => {
   if (!value) return null;
   const seconds = Number(value);
-  if (!Number.isNaN(seconds)) return Math.max(0, seconds * 1000);
+  if (!Number.isNaN(seconds)) return Math.min(Math.max(0, seconds * 1000), MAX_RETRY_AFTER_MS);
   const dateMs = Date.parse(value);
-  if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
+  if (!Number.isNaN(dateMs)) return Math.min(Math.max(0, dateMs - Date.now()), MAX_RETRY_AFTER_MS);
   return null;
 };
 
@@ -70,7 +72,7 @@ export const request = async (options: RequestOptions, deps: RetryDeps): Promise
         body: options.body ?? null,
         signal: controller.signal,
       };
-      const response = await fetch(options.url, requestInit);
+      const response = await originalFetch(options.url, requestInit);
 
       if (response.ok) {
         clearTimeout(timeoutHandle);
@@ -162,7 +164,7 @@ const parseErrorBody = (body: string): Record<string, string> | null => {
   return null;
 };
 
-export const createRetryingFetch = (deps: RetryDeps): typeof fetch => {
+export const createRetryingFetch = (deps: RetryDeps, baseFetch: typeof fetch): typeof fetch => {
   const baseDelay = deps.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
   const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
@@ -187,7 +189,7 @@ export const createRetryingFetch = (deps: RetryDeps): typeof fetch => {
           body: init?.body ?? null,
           signal: controller.signal,
         };
-        const response = await fetch(input, requestInit);
+        const response = await baseFetch(input, requestInit);
 
         if (response.ok) {
           clearTimeout(timeoutHandle);
@@ -257,7 +259,7 @@ export const createRetryingFetch = (deps: RetryDeps): typeof fetch => {
 
 export const installFetchWrapper = (deps: RetryDeps): (() => void) => {
   const original = globalThis.fetch;
-  globalThis.fetch = createRetryingFetch(deps);
+  globalThis.fetch = createRetryingFetch(deps, original);
 
   return () => {
     globalThis.fetch = original;
