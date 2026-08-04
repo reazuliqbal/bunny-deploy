@@ -54,7 +54,7 @@ A modern GitHub Action to deploy files to a [bunny.net](https://bunny.net) Edge 
 
 ```yaml
 - name: Deploy to Bunny.net
-  uses: bunny-deploy/bunny-deploy@v1
+  uses: reazuliqbal/bunny-deploy@v0.1.0
   with:
     source: dist
     destination: www
