@@ -1,0 +1,100 @@
+name: 'Bunny Deploy'
+description: 'Deploy a directory to bunny.net Edge Storage with sync, clean, and purge operations.'
+author: 'reazuliqbal'
+
+inputs:
+  source:
+    description: 'Source directory to upload. Resolved relative to working-directory or GITHUB_WORKSPACE.'
+    required: true
+  destination:
+    description: 'Destination directory inside the storage zone. No trailing slash (e.g. www or www/assets).'
+    required: false
+    default: ''
+  storageZoneName:
+    description: 'bunny.net storage zone name.'
+    required: true
+  storagePassword:
+    description: 'Storage zone password (used as AccessKey for storage API).'
+    required: true
+  storageEndpoint:
+    description: 'Storage endpoint hostname or region alias (storage, de, uk, ny, la, sg, se, br, jh, syd). Defaults to storage.bunnycdn.com.'
+    required: false
+    default: 'storage.bunnycdn.com'
+  accessKey:
+    description: 'bunny.net account API key. Required for purge.'
+    required: false
+    default: ''
+  pullZoneId:
+    description: 'Pull zone ID used for purge.'
+    required: false
+    default: ''
+  clean:
+    description: 'Recursively delete the destination directory before upload.'
+    required: false
+    default: 'false'
+  deployMode:
+    description: 'Deploy strategy. sync: delete remote files not present locally. replace: only upload (use clean:true to clear first).'
+    required: false
+    default: 'sync'
+  purge:
+    description: 'Purge the pull zone after upload.'
+    required: false
+    default: 'false'
+  purgeDelay:
+    description: 'Seconds to wait before purging to allow storage replication.'
+    required: false
+    default: '0'
+  cdnTag:
+    description: 'Optional CacheTag to selectively purge. Sent as { CacheTag } in the purge body.'
+    required: false
+    default: ''
+  maxAttempts:
+    description: 'Number of attempts for each network operation (upload, clean, purge, list).'
+    required: false
+    default: '5'
+  concurrency:
+    description: 'Maximum parallel uploads.'
+    required: false
+    default: '25'
+  exclude:
+    description: 'Newline-separated glob patterns to exclude from upload.'
+    required: false
+    default: ''
+  contentType:
+    description: 'Override the Content-Type header for uploaded files. When empty, the SDK defaults to application/octet-stream.'
+    required: false
+    default: ''
+  skipUnchanged:
+    description: 'Skip files whose SHA256 matches the remote checksum returned by file.list.'
+    required: false
+    default: 'true'
+  logLevel:
+    description: 'Level of detail for action logs (info or debug).'
+    required: false
+    default: 'info'
+  failOnError:
+    description: 'Fail the action if any file upload fails. When false, errors are logged and the action continues.'
+    required: false
+    default: 'true'
+  workingDirectory:
+    description: 'Working directory used to resolve relative source paths. Defaults to GITHUB_WORKSPACE.'
+    required: false
+    default: ''
+
+outputs:
+  uploaded:
+    description: 'Number of files uploaded.'
+  skipped:
+    description: 'Number of files skipped (unchanged).'
+  deleted:
+    description: 'Number of remote files deleted during sync.'
+  purged:
+    description: 'true if the pull zone was purged successfully.'
+
+runs:
+  using: 'node24'
+  main: 'dist/index.mjs'
+
+branding:
+  icon: 'upload'
+  color: 'orange'
