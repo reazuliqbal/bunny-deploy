@@ -184,9 +184,7 @@ export const createRetryingFetch = (deps: RetryDeps, baseFetch: typeof fetch): t
 
       try {
         const requestInit: RequestInit = {
-          ...(init?.method !== undefined && { method: init.method }),
-          ...(init?.headers !== undefined && { headers: init.headers }),
-          body: init?.body ?? null,
+          ...init,
           signal: controller.signal,
         };
         const response = await baseFetch(input, requestInit);

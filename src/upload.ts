@@ -78,7 +78,7 @@ const uploadFile = async (
   try {
     const body = createStreamingBody(entry.absolutePath);
 
-    await BunnyStorageSDK.file.upload(context.zone, '/' + remotePath, body as never, {
+    await BunnyStorageSDK.file.upload(context.zone, remotePath, body as never, {
       sha256Checksum: checksum,
       contentType: context.contentType,
     });
